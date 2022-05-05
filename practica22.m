@@ -126,7 +126,7 @@ xlabel('Freq [Hz]');
 title("Frequency Spectrum of 1 and 0 bits");
 
 %%%ADDING NOISE AWGN
-SNR=1; %%dBs
+SNR=100; %%dBs
 modulatedSignalASKnoise = awgn(modulatedSignalASK,SNR,'measured');
 figure(6);
 plot(tpulso,modulatedSignalASKnoise);
@@ -227,10 +227,10 @@ title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
 
 
 %Filtro
-%load filterLPK5010.mat % 
+%load filterLP126Noise.mat % 
 %demodulatedSignalASKfilter = filter(Hd,demodulatedSignalASK);
-load filterLP126Noise.mat % 
-demodulatedSignalASKfilter = filter(Hd,demodulatedSignalASK);
+load filterLP126W.mat % 
+demodulatedSignalASKfilter = filter(Fd,demodulatedSignalASK);
 %demodulatedSignalASKfilter = demodulatedSignalASKfilter(1:end-16);
 figure(13);
 plot(demodulatedSignalASKfilter);

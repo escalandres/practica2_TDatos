@@ -5,7 +5,7 @@ clc
 %Parte 1: conversion del texto a binario
 
 %126 palabras
-text = 'A long, long time ago. I can still remember how that music used to make me smile. And I knew if I had my chance that I could make those people dance. And maybe they would be happy for a while. But February made me shiver. With every paper I would deliver. Bad news on the doorstep. I could not take one more step. I cannot remember if I cried. When I read about his widowed bride. But something touched me deep inside. The day the music died. So bye-bye, Miss American Pie. Drove my Chevy to the levee, but the levee was dry. And them good old boys were drinking whiskey and rye. Singin This will be the day that I die. This will be the day that I die';
+text = 'A long, long time ago. I can still remember how that music used to make me smile. \nAnd I knew if I had my chance that I could make those people dance. \nAnd maybe they would be happy for a while. But February made me shiver. \nWith every paper I would deliver. Bad news on the doorstep. I could not take one more step. \nI cannot remember if I cried. When I read about his widowed bride. But something touched me deep inside. \nThe day the music died. So bye-bye, Miss American Pie. Drove my Chevy to the levee, but the levee was dry. \nAnd them good old boys were drinking whiskey and rye. Singin This will be the day that I die. This will be the day that I die';
 %text = 'A long, long time ago.';
 binary = dec2bin(text);
 %str = bin2dec(binary);
@@ -53,7 +53,7 @@ disp('Polar NRZ codification finished')
 fm = 44100; % frecuencia de muestreo [HertbitStream = muestras por seg];
 Tm = 1/fm;
 fc = 5010; %Hz
-tmax=(3*460256)/132301; %tiempo en s
+tmax=(3*length(bitStream))/132301; %tiempo en s
 t1 = 0: Tm :tmax;
 t1(length(t1)+1)=10.4366;
 t1(length(t1)+1)=10.4366;
