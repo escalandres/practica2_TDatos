@@ -1,7 +1,7 @@
 close all
 clear all
 clc
-%Practica 2.2: Ruido
+
 %Parte 1: conversion del texto a binario
 
 %126 palabras
@@ -19,69 +19,52 @@ H = zeros ([1 limit]);
 count = 1;
 for i = 1:length(text)
     for j = 1:7
-%         h(count) = str2num(binary(i,j));
         H(count) = str2double(binary(i,j));
         count=count+1;
     end
 end
 
-sendText = fopen('sendText.txt','w');
-for e=1:4557   
-    fprintf(sendText,'%c',H(e));
-end
+%sendText = fopen('sendText.txt','w');
+% for e=1:4557   
+%     fprintf(sendText,'%c',H(e));
+% end
 disp('Binary convertion completed')
 
 disp('binary sended')
 disp(H)
 
-A = 20; %W potencia de una torre celular, 43dBm = 20W 
-fm = 44100; % frecuencia de muestreo [Hertz = muestras por seg];
-Tm = 1/fm;
-fc = 5010; %Hz
-tmax=3; %tiempo en s
-t1 = 0: Tm :tmax;
-disp('ASK modulation starting')
 %%%MODULACIÓN DIGITAL
-T = length(H);
-pulsoBitUno(1:(length(t1)/T)+1)=A; %bit 1;
-tpulso = t1;
-pulsoBitCero(1:length(t1)/T)=-A; %Bit 0;
-
-pulseSignal=0;
-
-for k = 1:length(H)
-    if H(k)==1
-        pulseSignal=horzcat(pulseSignal,pulsoBitUno);
+Fbit = 100;
+Tbit = 1/Fbit;
+disp('Polar NRZ codification started')
+bitStream=TestPNRZ(H,Tbit);
+bitStream(1)=[];
+bitStream(length(bitStream))=[];
+A = 20; %W potencia de una torre celular, 43dBm = 20W 
+for k=1:length(bitStream)
+    if bitStream(k)==1
+        bitStream(k)=A;
     else
-        pulseSignal=horzcat(pulseSignal,pulsoBitCero);
+        bitStream(k)=-A;
     end
 end
+disp('Polar NRZ codification finished')
 
-%xmax=numel(binary)*.01;
-%t2 = linspace(0,xmax,length(pulseSignal));
-add = 3.0000;
+fm = 44100; % frecuencia de muestreo [HertbitStream = muestras por seg];
+Tm = 1/fm;
+fc = 5010; %Hz
+tmax=(3*460256)/132301; %tiempo en s
+t1 = 0: Tm :tmax;
+t1(length(t1)+1)=10.4366;
+t1(length(t1)+1)=10.4366;
+t1(length(t1)+1)=10.4366;
 
-for k = length(t1):length(t1)+(length(pulseSignal)-length(t1))
-    t1(k) = add; 
-end
-
-figure(1);
-plot(t1,pulseSignal,'r');
+figure(2);
+plot(t1,bitStream,'r');
 xlabel('Time [s]');
-axis([-0.1 3.1 -A-0.2 A+0.2]);
+axis([-0.1 tmax+1 -A-2 A+2]);
 title("Bit Pulses 1 and 0 with Bit 1 = "+A+", and Bit 0 = "+(-A));
 disp('ASK modulation completed')
-
-%Análisis en frecuencia de la señal moduladora (tren de pulsos)
-N=100000;
-w=linspace(-fm/2,fm/2,N)*2*pi;
-PS=fftshift(fft(pulseSignal,N))*Tm;
-figure(2)
-plot(w/(2*pi),abs(PS))
-xlabel('Frecuencia [Hz]')
-ylabel('Magnitud')
-grid
-title('Espectro de la señal de mensaje PS(w)')
 
 %Señal portadora
 figure(3)
@@ -92,121 +75,62 @@ grid
 title("Señal portadora c(t) with fc = "+fc+" and A = "+A)
 
 %Transformada de Fourier de la señal portadora
-C1=fftshift(fft(c1,N))*Tm;
 figure(3)
+fmax = fm/2;
+N = fm*tmax; %muestras / s /s = muestras
+f1 = -fmax : fm/N : fmax ;  %fs(muestras / s / muestras = 1 muestra /s)
+f1(length(f1)+1)=2.2050;
+f1(length(f1)+1)=2.2050;
+f1(length(f1)+1)=2.2050;
+C1 = abs(fftshift(fft(c1))); %DEP (PSD)
 subplot(212)
-plot(w/(2*pi),abs(C1))
-grid
+plot(f1,C1);
 xlabel('Frecuencia [Hz]') ;
 ylabel('Magnitud')
-% axis([-400 400 0 0.09])
-title('Espectro de la señal portadora C(w)')
+title("Frequency Spectrum of sine signal with f_c= " + fc + " [Hz]");
 
+
+% axis([-400 400 0 0.09])
+title("Espectro de la señal portadora C(w) con f_c= " + fc + " [Hz]")
 disp('Carry signal Fourier transform completed')
 
 %Señal modulada
-modulatedSignalASK = c1 .* pulseSignal;
+modulatedSignalASK = c1 .* bitStream;
 figure(4);
 subplot(211)
 plot(t1,modulatedSignalASK);
 xlabel('Time [s]');
+axis([-1 tmax+1 -430 430])
 title("ASK bit modulation with f_c= " + fc + "[Hz]");
 
 %Transformada de Fourier de la señal Modulada
-modulatedSignalASKfrec=fftshift(fft(modulatedSignalASK,N))*Tm;
-figure(4)
+modulatedSignalASKfrec = abs(fftshift(fft(modulatedSignalASK))); %DEP (PSD)
+freq = (-fm/2):(fm/N):(fm/2);
+freq(length(freq)+1)=2.2050;
+freq(length(freq)+1)=2.2050;
+freq(length(freq)+1)=2.2050;
+figure(4);
 subplot(212)
-plot(w/(2*pi),abs(modulatedSignalASKfrec))
+plot(freq,modulatedSignalASKfrec,'m');
 xlabel('Freq [Hz]');
 ylabel('Magnitud')
-grid
 title("Frequency Spectrum of ASK bit modulation with f_c= " + fc + "[Hz]");
 
-%%%ADDING NOISE AWGN
-SNR=25; %%dBs
-modulatedSignalASKnoise = awgn(modulatedSignalASK,SNR,'measured');
-figure(11);
-plot(tpulso,modulatedSignalASKnoise);
-xlabel('Time [s]');
-title("ASK signal with awgn noise @" + SNR +"dB");
-
-
-%%%ADDING INTERFERENCE (OTHER SIGNALS ADDING TO NOISE)
-A1 = 20; A2 = 20; A3 = 20;
-fc1 = 10000; fc2 = 900; fc3 = 500;
-
-int1 = A1*cos(2*pi*fc1*t1);
-int2 = A2*cos(2*pi*fc2*t1);
-int3 = A3*cos(2*pi*fc3*t1);
-int4(1:length(t1)) = 0;
-random1 = randi([1 length(t1)]);random2 = randi([1 length(t1)]);random3 = randi([1 length(t1)]);
-int4(random1) = 4;
-int4(random2) = 2;
-int4(random3) = 10;
-interferenceSignals = int1 + int2 +int3 + int4;
-modulatedSignalASK_noise_interf = modulatedSignalASKnoise + interferenceSignals;
-figure(12);
-plot(t1,modulatedSignalASK_noise_interf);
-hold on;
-plot(t1,int1,'b');
-plot(t1,int2,'r');
-plot(t1,int3,'m');
-plot(t1,int4,'g');
-title("ASK modulated OVER time, noise, interferences");
-
-hold off;
-figure(13);
-plot(t1,modulatedSignalASK_noise_interf);
-xlabel("Time [s]");
-title("ASK modulated bits OVER TIME with noise and interference");
-
-%%%ADDING ATTENUATION (DUE TO MEDIUM AND DISTANCE)
-%%EACH MEDIUM HAS AN ATTENUATION CONSTANT alpha
-%  exp(+-gamma*z)cos(i2pit)  =
-%  exp(+-alpha*z)exp(+-iBetaz)cos(i2pit)
-%%%%%%%%%%%%%%%%%%
-taten = t1; %s
-distMax = 10;
-%distMax -> length(taten)
-%zStep -> 1
-zStep = 1*distMax/length(taten);
-z = 0:zStep:distMax; % m
-z = z(1:end-1);
-alpha=0.3; %% 
-
-c=3e8;
-lambda = c/fc;
-Beta = 2*pi/lambda; %aire
-signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*modulatedSignalASK_noise_interf;
-%signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*cos(2*pi*fcAt*taten);
-figure(14);
-plot(taten,signalAten);
-xlabel("Time [s]");
-title("ASK modulated bits OVER TIME with noise, interference and attenuation");
-figure(15)
-plot(z,signalAten);
-xlabel("Distance [m]");
-title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation");
-
-
-
-
-
-
-
-
-
-
-
-
+N = fm*tmax;
+PULSOSfrec = abs(fftshift(fft(bitStream))); %DEP (PSD)
+% freq = (-fm/2):(fm/N):(fm/2);
+figure(5);
+plot(freq,PULSOSfrec,'g');
+xlabel('Freq [Hz]');
+title("Frequency Spectrum of 1 and 0 bits");
 
 %RECEPTOR 
 
 %Demodulación coherente
-demodulatedSignalASK = signalAten.*c1;
-demodulatedSignalASKfrec = abs(fftshift(fft(demodulatedSignalASK,N))); %DEP (PSD)
-figure(5);
-plot(w,demodulatedSignalASKfrec,'m');
+demodulatedSignalASK = modulatedSignalASK.*c1;
+demodulatedSignalASKfrec = abs(fftshift(fft(demodulatedSignalASK))); %DEP (PSD)
+figure(6);
+plot(freq,demodulatedSignalASKfrec,'m');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
 
@@ -216,24 +140,20 @@ title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
 load filterLP126W.mat % 
 demodulatedSignalASKfilter = filter(Fd,demodulatedSignalASK);
 %demodulatedSignalASKfilter = demodulatedSignalASKfilter(1:end-16);
-figure(6);
+figure(7);
 plot(demodulatedSignalASKfilter);
 xlabel('Time [s]');
 title("ASK Demodulated bits in time");
 
 demodulatedSignalASKfilterFrec = abs(fftshift(fft(demodulatedSignalASKfilter))); %DEP (PSD)
-figure(7);
+figure(8);
 plot(demodulatedSignalASKfilterFrec,'g');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of ASK bit DEmodulation Filtered");
 
 %%Decision Making
-%find the index of the timeClock Sample(half of period of pulse)
-% indexBit1 = find(tpulso==0.75);
-% indexBit2 = find(tpulso==2.25);
-%%clock is set into the middle of each pulse (0.5s, 1.5s).
 
-%Caso 22 palabras
+%Caso 22 palabras -------------------
 TRecuperado = length(demodulatedSignalASKfilter)/length(H);
 limitRecuperado = length(demodulatedSignalASKfilter)/TRecuperado;
 limitRecuperado1 = round(limitRecuperado);
@@ -251,16 +171,17 @@ end
 disp('Bits recuperados')
 %disp(bitsRecuperados)
 
-bitsRecovered = zeros([1 length(H)]);
-Rcount = 1;
-for k=1:4559
-    bitsRecovered(Rcount) = bitsRecuperados(k);
-    Rcount = Rcount+1;
-end
+% bitsRecovered = zeros([1 length(H)]);
+% Rcount = 1;
+% for k=1:4559
+%     bitsRecovered(Rcount) = bitsRecuperados(k);
+%     Rcount = Rcount+1;
+% end
 
-bitsRecovered(32) = [];
-bitsRecovered(82) = [];
-disp(bitsRecovered)
+% bitsRecovered(32) = [];
+% bitsRecovered(82) = [];
+% disp(bitsRecovered)
+bitsRecovered=bitsRecuperados;
 
 %Conversion del binario recuperado en texto
 filas = round(length(bitsRecovered)/7);
