@@ -55,10 +55,10 @@ Tm = 1/fm;
 fc = 5010; %Hz
 tmax=(3*460256)/132301; %tiempo en s
 t1 = 0: Tm :tmax;
+t1(length(t1)+1)=10.4366;
+t1(length(t1)+1)=10.4366;
+t1(length(t1)+1)=10.4366;
 tpulso = t1;
-t1(length(t1)+1)=10.4366;
-t1(length(t1)+1)=10.4366;
-t1(length(t1)+1)=10.4366;
 
 figure(2);
 plot(t1,bitStream,'r');
@@ -126,9 +126,9 @@ xlabel('Freq [Hz]');
 title("Frequency Spectrum of 1 and 0 bits");
 
 %%%ADDING NOISE AWGN
-SNR=25; %%dBs
+SNR=1; %%dBs
 modulatedSignalASKnoise = awgn(modulatedSignalASK,SNR,'measured');
-figure(11);
+figure(6);
 plot(tpulso,modulatedSignalASKnoise);
 xlabel('Time [s]');
 title("ASK signal with awgn noise @" + SNR +"dB");
@@ -147,7 +147,7 @@ int4(random2) = 2;
 int4(random3) = 10;
 interferenceSignals = int1 + int2 +int3 + int4;
 modulatedSignalASK_noise_interf = modulatedSignalASKnoise + interferenceSignals;
-figure(12);
+figure(7);
 plot(t1,modulatedSignalASK_noise_interf);
 hold on;
 plot(t1,int1,'b');
@@ -157,7 +157,7 @@ plot(t1,int4,'g');
 title("ASK modulated OVER time, noise, interferences");
 
 hold off;
-figure(13);
+figure(8);
 plot(t1,modulatedSignalASK_noise_interf);
 xlabel("Time [s]");
 title("ASK modulated bits OVER TIME with noise and interference");
@@ -182,11 +182,11 @@ lambda = c/fc;
 Beta = 2*pi/lambda; %aire
 signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*modulatedSignalASK_noise_interf;
 %signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*cos(2*pi*fcAt*taten);
-figure(14);
+figure(9);
 plot(taten,signalAten);
 xlabel("Time [s]");
 title("ASK modulated bits OVER TIME with noise, interference and attenuation");
-figure(15)
+figure(10)
 plot(z,signalAten);
 xlabel("Distance [m]");
 title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation");
@@ -196,7 +196,7 @@ title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation
 %%the path loss considering Free Space ans LoS considering a 1,2...,10m distance
 %%and antennas gain of 3dBi, and fc=10kz., and Pt=20w o 43dBm;
 %Lp = ...  
-figure(16)
+figure(11)
 Ptx = 43; %dBm, Potencia de la torre celular
 Gtx = 3; %dBi, Ganancia de la torre celular
 Grx = 3; %dBi, Ganancia del receptor
@@ -218,7 +218,7 @@ title('Perdida por trayectoria Friis')
 %Multiplying
 demodulatedSignalASK = signalAten.*c1;
 demodulatedSignalASKfrec = abs(fftshift(fft(demodulatedSignalASK))); %DEP (PSD)
-figure(16);
+figure(12);
 plot(freq,demodulatedSignalASKfrec,'m');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
@@ -229,16 +229,16 @@ title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
 %Filtro
 %load filterLPK5010.mat % 
 %demodulatedSignalASKfilter = filter(Hd,demodulatedSignalASK);
-load filterLP126W.mat % 
-demodulatedSignalASKfilter = filter(Fd,demodulatedSignalASK);
+load filterLP126Noise.mat % 
+demodulatedSignalASKfilter = filter(Hd,demodulatedSignalASK);
 %demodulatedSignalASKfilter = demodulatedSignalASKfilter(1:end-16);
-figure(7);
+figure(13);
 plot(demodulatedSignalASKfilter);
 xlabel('Time [s]');
 title("ASK Demodulated bits in time");
 
 demodulatedSignalASKfilterFrec = abs(fftshift(fft(demodulatedSignalASKfilter))); %DEP (PSD)
-figure(8);
+figure(14);
 plot(demodulatedSignalASKfilterFrec,'g');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of ASK bit DEmodulation Filtered");
@@ -262,17 +262,6 @@ for k = 570:round(TRecuperado):length(demodulatedSignalASKfilter)
 end
 disp('Bits recuperados')
 %disp(bitsRecuperados)
-
-% bitsRecovered = zeros([1 length(H)]);
-% Rcount = 1;
-% for k=1:4559
-%     bitsRecovered(Rcount) = bitsRecuperados(k);
-%     Rcount = Rcount+1;
-% end
-
-% bitsRecovered(32) = [];
-% bitsRecovered(82) = [];
-% disp(bitsRecovered)
 bitsRecovered=bitsRecuperados;
 
 %Conversion del binario recuperado en texto
