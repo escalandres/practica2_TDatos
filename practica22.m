@@ -31,7 +31,7 @@ end
 disp('Binary convertion completed')
 
 disp('binary sended')
-disp(H)
+% disp(H)
 
 %%%MODULACIÓN DIGITAL
 Fbit = 100;
@@ -55,6 +55,7 @@ Tm = 1/fm;
 fc = 5010; %Hz
 tmax=(3*460256)/132301; %tiempo en s
 t1 = 0: Tm :tmax;
+tpulso = t1;
 t1(length(t1)+1)=10.4366;
 t1(length(t1)+1)=10.4366;
 t1(length(t1)+1)=10.4366;
@@ -124,15 +125,106 @@ plot(freq,PULSOSfrec,'g');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of 1 and 0 bits");
 
+%%%ADDING NOISE AWGN
+SNR=25; %%dBs
+modulatedSignalASKnoise = awgn(modulatedSignalASK,SNR,'measured');
+figure(11);
+plot(tpulso,modulatedSignalASKnoise);
+xlabel('Time [s]');
+title("ASK signal with awgn noise @" + SNR +"dB");
+
+%%%ADDING INTERFERENCE (OTHER SIGNALS ADDING TO NOISE)
+A1 = 20; A2 = 20; A3 = 20;
+fc1 = 10000; fc2 = 900; fc3 = 500;
+
+int1 = A1*cos(2*pi*fc1*t1);
+int2 = A2*cos(2*pi*fc2*t1);
+int3 = A3*cos(2*pi*fc3*t1);
+int4(1:length(t1)) = 0;
+random1 = randi([1 length(t1)]);random2 = randi([1 length(t1)]);random3 = randi([1 length(t1)]);
+int4(random1) = 4;
+int4(random2) = 2;
+int4(random3) = 10;
+interferenceSignals = int1 + int2 +int3 + int4;
+modulatedSignalASK_noise_interf = modulatedSignalASKnoise + interferenceSignals;
+figure(12);
+plot(t1,modulatedSignalASK_noise_interf);
+hold on;
+plot(t1,int1,'b');
+plot(t1,int2,'r');
+plot(t1,int3,'m');
+plot(t1,int4,'g');
+title("ASK modulated OVER time, noise, interferences");
+
+hold off;
+figure(13);
+plot(t1,modulatedSignalASK_noise_interf);
+xlabel("Time [s]");
+title("ASK modulated bits OVER TIME with noise and interference");
+
+
+%%%ADDING ATTENUATION (DUE TO MEDIUM AND DISTANCE)
+%%EACH MEDIUM HAS AN ATTENUATION CONSTANT alpha
+%  exp(+-gamma*z)cos(i2pit)  =
+%  exp(+-alpha*z)exp(+-iBetaz)cos(i2pit)
+%%%%%%%%%%%%%%%%%%
+taten = t1; %s
+distMax = 10;
+%distMax -> length(taten)
+%zStep -> 1
+zStep = 1*distMax/length(taten);
+z = 0:zStep:distMax; % m
+z = z(1:end-1);
+alpha=0.3; %% 
+
+c=3e8;
+lambda = c/fc;
+Beta = 2*pi/lambda; %aire
+signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*modulatedSignalASK_noise_interf;
+%signalAten = exp(-alpha.*z).*exp(-i*Beta.*z).*cos(2*pi*fcAt*taten);
+figure(14);
+plot(taten,signalAten);
+xlabel("Time [s]");
+title("ASK modulated bits OVER TIME with noise, interference and attenuation");
+figure(15)
+plot(z,signalAten);
+xlabel("Distance [m]");
+title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation");
+
+%%%ADDING PATH FADING (DUE TO OF THE MEDIUM TYPE AND THE EFFECTS ON SIGNAL SUCH AS REFLECTION, REFRACTION, SCATTER, ETC. AND DISTANCE)
+%%WE CAN MODELED THIS BY PROPAGATION MODELS (i.g. Friis Model)%% Calculate
+%%the path loss considering Free Space ans LoS considering a 1,2...,10m distance
+%%and antennas gain of 3dBi, and fc=10kz., and Pt=20w o 43dBm;
+%Lp = ...  
+figure(16)
+Ptx = 43; %dBm, Potencia de la torre celular
+Gtx = 3; %dBi, Ganancia de la torre celular
+Grx = 3; %dBi, Ganancia del receptor
+frec = 10e3; %MHZ, Frecuencia de la Torre celular
+lamba = c/frec;
+R = 1:10; %m, Distancia entre el receptor y la Torre celular
+Prx = Ptx+Gtx+Grx+20*log(lamba)-20*log(4*pi*R);
+Plost = Ptx - Prx;
+plot(R,Plost,"LineWidth",2,"Color",'b')
+xlabel('Distancia R[m]')
+ylabel('Perdida[dBm]')
+title('Perdida por trayectoria Friis')
+
+
+
 %RECEPTOR 
 
-%Demodulación coherente
-demodulatedSignalASK = modulatedSignalASK.*c1;
+%%Recovering the signal (coherent demodulation)
+%Multiplying
+demodulatedSignalASK = signalAten.*c1;
 demodulatedSignalASKfrec = abs(fftshift(fft(demodulatedSignalASK))); %DEP (PSD)
-figure(6);
+figure(16);
 plot(freq,demodulatedSignalASKfrec,'m');
 xlabel('Freq [Hz]');
 title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
+
+
+
 
 %Filtro
 %load filterLPK5010.mat % 
