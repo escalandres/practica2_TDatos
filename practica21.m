@@ -5,20 +5,24 @@ clc
 %Parte 1: conversion del texto a binario
 
 %126 palabras
-text = 'A long, long time ago. I can still remember how that music used to make me smile. \nAnd I knew if I had my chance that I could make those people dance. \nAnd maybe they would be happy for a while. But February made me shiver. \nWith every paper I would deliver. Bad news on the doorstep. I could not take one more step. \nI cannot remember if I cried. When I read about his widowed bride. But something touched me deep inside. \nThe day the music died. So bye-bye, Miss American Pie. Drove my Chevy to the levee, but the levee was dry. \nAnd them good old boys were drinking whiskey and rye. Singin This will be the day that I die. This will be the day that I die';
+%text = 'A long, long time ago. I can still remember how that music used to make me smile. \nAnd I knew if I had my chance that I could make those people dance. \nAnd maybe they would be happy for a while. But February made me shiver. \nWith every paper I would deliver. Bad news on the doorstep. I could not take one more step. \nI cannot remember if I cried. When I read about his widowed bride. But something touched me deep inside. \nThe day the music died. So bye-bye, Miss American Pie. Drove my Chevy to the levee, but the levee was dry. \nAnd them good old boys were drinking whiskey and rye. Singin This will be the day that I die. This will be the day that I die';
 %text = 'A long, long time ago.';
-binary = dec2bin(text);
+fid = fopen('AmericanPieLyrics.txt');
+b = fread(fid,'*uint8')';
+fclose(fid);
+text = b;
+binary = dec2bin(text,8);
 %str = bin2dec(binary);
 
 %Parte 2: convertir binary a un vector (1x4557) 1 row and 4557 colums
 
 %651*7 = 4557 --651 letras de 7 bits cada una
-limit = length(text)*7;
+limit = length(text)*8;
 %Vector de 1x4557, donde se guardaran todos los datos binarios de binary
 H = zeros ([1 limit]);
 count = 1;
 for i = 1:length(text)
-    for j = 1:7
+    for j = 1:8
         H(count) = str2double(binary(i,j));
         count=count+1;
     end
@@ -184,11 +188,11 @@ disp('Bits recuperados')
 bitsRecovered=bitsRecuperados;
 
 %Conversion del binario recuperado en texto
-filas = round(length(bitsRecovered)/7);
-str = zeros([filas 7]);
+filas = round(length(bitsRecovered)/8);
+str = zeros([filas 8]);
 bitCount = 1;
 for i = 1:filas
-    for j = 1:7
+    for j = 1:8
         str(i,j) = bitsRecovered(bitCount);
         bitCount=bitCount+1;
     end
@@ -197,7 +201,7 @@ pA = string(str);
 pru = zeros([filas 1]);
 
 for k=1:filas
-    pru(k) = bin2dec(pA(k,1)+pA(k,2)+pA(k,3)+pA(k,4)+pA(k,5)+pA(k,6)+pA(k,7));
+    pru(k) = bin2dec(pA(k,1)+pA(k,2)+pA(k,3)+pA(k,4)+pA(k,5)+pA(k,6)+pA(k,7)+pA(k,8));
 end
 
 strArray = pru;

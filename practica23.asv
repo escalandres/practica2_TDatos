@@ -11,27 +11,61 @@ fid = fopen('AmericanPieLyrics.txt');
 b = fread(fid,'*uint8')';
 fclose(fid);
 text = b;
-binary = dec2bin(text);
+binary = dec2bin(text,8);
 %str = bin2dec(binary);
 
 %Parte 2: convertir binary a un vector (1x4557) 1 row and 4557 colums
 
 %651*7 = 4557 --651 letras de 7 bits cada una
-limit = length(text)*7;
+limit = length(text)*8;
 %Vector de 1x4557, donde se guardaran todos los datos binarios de binary
 H = zeros ([1 limit]);
 count = 1;
 for i = 1:length(text)
-    for j = 1:7
+    for j = 1:8
         H(count) = str2double(binary(i,j));
         count=count+1;
     end
 end
+%H = FCRC(H);
 
-%sendText = fopen('sendText.txt','w');
-% for e=1:4557   
-%     fprintf(sendText,'%c',H(e));
+% bS = "";
+% for i=1:length(H)
+%     a = string(H(i));
+%     %bS = horzcat(bS,a);
+%     bS = bS+a;
 % end
+% 
+% smessage="0b"+bS+"u32";
+% %message = 0b1101100111011010u32;
+% message = str2num(smessage);
+% messageLength = length(H);
+% divisor = 0b1101u32;
+% divisorDegree= 3;
+% 
+% divisor = bitshift(divisor,messageLength-divisorDegree-1);
+% dec2bin(divisor)
+% 
+% divisor = bitshift(divisor,divisorDegree);
+% remainder = bitshift(message,divisorDegree);
+% dec2bin(divisor)
+% 
+% dec2bin(remainder)
+% 
+% for k=1:messageLength
+% 	if bitget(remainder,messageLength+divisorDegree)
+% 		remainder = bitxor(remainder,divisor);
+% 	end
+% 	remainder = bitshift(remainder,1);
+% end
+% 
+% CRC_check_value = bitshift(remainder,-messageLength);
+% FCS = dec2bin(CRC_check_value);
+% H(length(H)+1)=FCS(1);
+% H(length(H)+1)=FCS(2);
+% H(length(H)+1)=FCS(3);
+
+
 disp('Binary convertion completed')
 
 disp('binary sended')
@@ -44,6 +78,8 @@ disp('Polar NRZ codification started')
 bitStream=TestPNRZ(H,Tbit);
 bitStream(1)=[];
 bitStream(length(bitStream))=[];
+
+
 A = 20; %W potencia de una torre celular, 43dBm = 20W 
 for k=1:length(bitStream)
     if bitStream(k)==1
@@ -200,19 +236,19 @@ title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation
 %%the path loss considering Free Space ans LoS considering a 1,2...,10m distance
 %%and antennas gain of 3dBi, and fc=10kz., and Pt=20w o 43dBm;
 %Lp = ...  
-figure(11)
-Ptx = 43; %dBm, Potencia de la torre celular
-Gtx = 3; %dBi, Ganancia de la torre celular
-Grx = 3; %dBi, Ganancia del receptor
-frec = 10e3; %MHZ, Frecuencia de la Torre celular
-lamba = c/frec;
-R = 1:10; %m, Distancia entre el receptor y la Torre celular
-Prx = Ptx+Gtx+Grx+20*log(lamba)-20*log(4*pi*R);
-Plost = Ptx - Prx;
-plot(R,Plost,"LineWidth",2,"Color",'b')
-xlabel('Distancia R[m]')
-ylabel('Perdida[dBm]')
-title('Perdida por trayectoria Friis')
+% figure(11)
+% Ptx = 43; %dBm, Potencia de la torre celular
+% Gtx = 3; %dBi, Ganancia de la torre celular
+% Grx = 3; %dBi, Ganancia del receptor
+% frec = 10e3; %MHZ, Frecuencia de la Torre celular
+% lamba = c/frec;
+% R = 1:10; %m, Distancia entre el receptor y la Torre celular
+% Prx = Ptx+Gtx+Grx+20*log(lamba)-20*log(4*pi*R);
+% Plost = Ptx - Prx;
+% plot(R,Plost,"LineWidth",2,"Color",'b')
+% xlabel('Distancia R[m]')
+% ylabel('Perdida[dBm]')
+% title('Perdida por trayectoria Friis')
 
 
 
@@ -221,6 +257,8 @@ title('Perdida por trayectoria Friis')
 %%Recovering the signal (coherent demodulation)
 %Multiplying
 demodulatedSignalASK = signalAten.*c1;
+figure(11)
+plot(tpulso,demodulatedSignalASK)
 demodulatedSignalASKfrec = abs(fftshift(fft(demodulatedSignalASK))); %DEP (PSD)
 figure(12);
 plot(freq,demodulatedSignalASKfrec,'m');
@@ -231,9 +269,9 @@ title("Frequency Spectrum of ASK Demodulation with f_c= " + fc + "[Hz]");
 
 
 %Filtro
-%load filterLP126Noise.mat % 
+load filterLP126Noise.mat % 
 %demodulatedSignalASKfilter = filter(Hd,demodulatedSignalASK);
-load filterLP126W.mat % 
+%load filterLP126W.mat % 
 demodulatedSignalASKfilter = filter(Fd,demodulatedSignalASK);
 %demodulatedSignalASKfilter = demodulatedSignalASKfilter(1:end-16);
 figure(13);
@@ -257,7 +295,7 @@ bitsRecuperados = zeros([1 limitRecuperado1]);
 
 kBitRecuperados = 1;
 for k = 570:round(TRecuperado):length(demodulatedSignalASKfilter)
-    if(demodulatedSignalASKfilter(k) > 2000)
+    if(demodulatedSignalASKfilter(k) > 90)
         bitsRecuperados(kBitRecuperados) = 1;
     else
         bitsRecuperados(kBitRecuperados) = 0;
@@ -268,12 +306,38 @@ disp('Bits recuperados')
 %disp(bitsRecuperados)
 bitsRecovered=bitsRecuperados;
 
+% smessage="0b"+bitsRecovered+"u32";
+% message = 0b1101100111011010u32;
+% message = str2num(smessage);
+% messageLength = length(bitStream);
+% divisor = 0b1101u32;
+% divisorDegree= 3;
+% 
+% divisor = bitshift(divisor,messageLength-divisorDegree-1);
+% dec2bin(divisor)
+% 
+% divisor = bitshift(divisor,divisorDegree);
+% remainder = bitshift(message,divisorDegree);
+% dec2bin(divisor)
+% 
+% dec2bin(remainder)
+% 
+% for k=1:messageLength
+% 	if bitget(remainder,messageLength+divisorDegree)
+% 		remainder = bitxor(remainder,divisor);
+% 	end
+% 	remainder = bitshift(remainder,1);
+% end
+% 
+% CRC_check_value = bitshift(remainder,-messageLength);
+% FCS = dec2bin(CRC_check_value);
+
 %Conversion del binario recuperado en texto
-filas = round(length(bitsRecovered)/7);
-str = zeros([filas 7]);
+filas = round(length(bitsRecovered)/8);
+str = zeros([filas 8]);
 bitCount = 1;
 for i = 1:filas
-    for j = 1:7
+    for j = 1:8
         str(i,j) = bitsRecovered(bitCount);
         bitCount=bitCount+1;
     end
@@ -282,10 +346,127 @@ pA = string(str);
 pru = zeros([filas 1]);
 
 for k=1:filas
-    pru(k) = bin2dec(pA(k,1)+pA(k,2)+pA(k,3)+pA(k,4)+pA(k,5)+pA(k,6)+pA(k,7));
+    pru(k) = bin2dec(pA(k,1)+pA(k,2)+pA(k,3)+pA(k,4)+pA(k,5)+pA(k,6)+pA(k,7)+pA(k,8));
 end
 
 strArray = pru;
 textRecuperado = native2unicode(strArray);
 disp('Texto recuperado:')
-disp(textRecuperado.')
+textRecuperado=textRecuperado.';
+disp(textRecuperado)
+
+%1. PATH LOSS
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+Ptx = 43;
+Gtx = 12;
+Grx = 3;
+c = 3e8;
+distMax = 10;
+d = 0:distMax;
+
+P = Ptx + Gtx + Grx + 20*log(c/fc) - 20*log(4*pi*d);
+figure(17)
+plot(d,P);
+xlabel("Distance [m]");
+ylabel('Potencia');
+grid
+title("ASK modulated bits OVER DISTANCE with noise, interference and attenuation");
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+mensaje = strArray.';
+mensaje = char(mensaje);
+mensaje1 = text;
+mensaje1 = char(mensaje1);
+
+
+%2. THROUGHPUT
+framesFallidos = 0;
+
+framesTotales = length(mensaje);
+for i = 1:length(mensaje)
+    if strcmp(mensaje(i), mensaje1(i)) == 0
+        framesFallidos = framesFallidos + 1;
+    end
+end
+t2 = tpulso;
+framesExitosos = framesTotales - framesFallidos;
+tiempo = (length(t2)-1) / 11000;
+throuhput = framesExitosos/tiempo;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%3. ERROR POSIBILITY
+FER = framesFallidos/framesTotales;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%4. OUTTAGE POSIBILITY
+OUTP = (framesExitosos-framesTotales)/framesTotales;
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%5. AGE OF INFORMATION
+AOI = ((tiempo/framesTotales)*2 - tiempo/framesTotales);
+
+
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%CRC 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% aux = str2num(str(1,:))
+
+% for i = 1:length(str)
+%     listaSE(i) = bin2dec(str(i,:))
+% end
+%     listaCE = mensaje 
+listaCE = strArray.';
+% for k=1:length(binary)
+%     listaSE(k) = bin2dec(binary);
+% end
+listaSE = strArray.';
+errores = 0;
+for i = 1:length(binary) 
+    message = listaSE(i);
+    messageLength = 8;
+    divisor = 0b1101u32;
+    divisorDegree = 3;
+    
+    divisor = bitshift(divisor,messageLength-divisorDegree-1);
+    dec2bin(divisor)
+    
+    divisor = bitshift(divisor,divisorDegree);
+    remainder = bitshift(message,divisorDegree);
+    dec2bin(divisor)
+    
+    dec2bin(remainder)
+    
+    for k = 1:messageLength
+        if bitget(remainder,messageLength+divisorDegree)
+            remainder = bitxor(remainder,divisor);
+        end
+        remainder = bitshift(remainder,1);
+    end
+    
+    CRC_check_value = bitshift(remainder,-messageLength);
+    dec2bin(CRC_check_value)
+    
+    
+    %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+    %COMPROBACION DEL MENSAJE
+    remainder = bitshift(listaCE(i),divisorDegree);
+    remainder = bitor(remainder,CRC_check_value);
+    % remainder = bitset(remainder,[2 3]);
+    % remainder = bitset(remainder,6);
+    
+    for k = 1:messageLength
+        if bitget(remainder,messageLength+divisorDegree)
+            remainder = bitxor(remainder,divisor);
+        end
+        remainder = bitshift(remainder,1);
+    end
+    if remainder == 0
+        disp('Message is error free.')
+    
+    else
+        disp('Message contains errors.')
+        errores = errores + 1
+    end
+end 
