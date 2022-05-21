@@ -166,7 +166,7 @@ xlabel('Freq [Hz]');
 title("Frequency Spectrum of 1 and 0 bits");
 
 %%%ADDING NOISE AWGN
-SNR=100; %%dBs
+SNR=20; %%dBs
 modulatedSignalASKnoise = awgn(modulatedSignalASK,SNR,'measured');
 figure(6);
 plot(tpulso,modulatedSignalASKnoise);

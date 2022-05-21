@@ -1,0 +1,13 @@
+clear all
+close all
+clc
+
+%%%%%Grafica FER SNR%%%%
+FER2 = [11.77 3.21 0.00.76 0.0015 0.0015]/100;
+SNR2 = [1 5 10 20 100];
+
+plot(SNR2,FER2,'LineWidth',2,'b')
+xlabel('Signal Noise Rate SNR [dbm]')
+ylabel('Frame Error Rate FER')
+
+
